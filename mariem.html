@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoDam Analyzer - Geotechnical Analysis Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #faf5ff 0%, #f0e6ff 100%);
+            color: #5a4a9a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(90deg, #5a4588, #b19cd9);
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(180, 157, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ffffff, #e6d9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .welcome-message {
+            font-size: 1.1rem;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(180, 157, 255, 0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 2px solid #e6d9ff;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(180, 157, 255, 0.25);
+        }
+        
+        .card h2 {
+            color: #5a4a9a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0e6ff;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h2 span {
+            color: #9c89ff;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #6d5cba;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e6d9ff;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #faf5ff;
+        }
+        
+        input:focus, select:focus {
+            border-color: #9c89ff;
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(156, 137, 255, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(90deg, #9c89ff, #7d6bcc);
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: linear-gradient(90deg, #7d6bcc, #5a4a9a);
+            transform: scale(1.02);
+        }
+        
+        .result {
+            background: #f5f0ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #9c89ff;
+            font-weight: 600;
+            color: #5a4a9a;
+        }
+        
+        .result.error {
+            border-left-color: #ff6b6b;
+            color: #d32f2f;
+            background: #ffebee;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #e6d9ff;
+        }
+        
+        .mohr-container {
+            height: 300px;
+            position: relative;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #e6d9ff;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #2d052e;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            background: #f5f0ff;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #420742;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .tab:hover {
+            background: #38073a;
+            transform: translateY(-2px);
+        }
+        
+        .tab.active {
+            background: #360744;
+            color: white;
+            border-color: #9c89ff;
+            box-shadow: 0 4px 15px rgba(156, 137, 255, 0.3);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            color: #7d6bcc;
+            font-size: 0.95rem;
+            border-top: 2px solid #281d3d;
+            background: rgb(129, 80, 136);
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(180, 157, 255, 0.1);
+        }
+        
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .output-item {
+            background: #f5f0ff;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e6d9ff;
+            transition: transform 0.3s;
+        }
+        
+        .output-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .output-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #5a4a9a;
+        }
+        
+        .output-label {
+            font-size: 0.9rem;
+            color: #7d6bcc;
+            margin-top: 5px;
+        }
+        
+        .team-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e6d9ff;
+        }
+        
+        .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+    justify-content: center; 
+    max-width: 1000px;  
+    margin-left: auto; 
+    margin-right: auto; 
+}
+        
+        .team-member {
+            background: #441d64;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e6d9ff;
+            transition: all 0.3s;
+        }
+        
+        .team-member:hover {
+            background: #efecf7;
+            transform: translateY(-2px);
+        }
+        
+        
+        .geotech-info {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(180, 157, 255, 0.15);
+            border: 2px solid #e6d9ff;
+        }
+        
+        .geotech-info h2 {
+            color: #5a4a9a;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .geotech-info p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: #faf5ff;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #e6d9ff;
+            transition: transform 0.3s;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+            background: #f5f0ff;
+        }
+        
+        .info-card h3 {
+            color: #5a4a9a;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .nav-btn {
+            padding: 12px 25px;
+            background: #5f105b;
+            border: 2px solid #d18ed1;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #7e5678;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-btn:hover {
+            background: #e6d9ff;
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn.active {
+            background: #a678ac;
+            border-color: #66247a;
+            color: white;
+            box-shadow: 0 4px 15px rgba(156, 137, 255, 0.3);
+        }
+        
+        .main-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .main-section.active {
+            display: block;
+        }
+        
+        .flownet-container {
+            text-align: center;
+            padding: 20px;
+            background: #faf5ff;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #e6d9ff;
+        }
+        
+        .flownet-diagram {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 2px solid #e6d9ff;
+            padding: 10px;
+            background: white;
+        }
+        
+        .mohr-failure-line {
+            position: absolute;
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-menu {
+                justify-content: center;
+            }
+            
+            .team-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌱 GeoTech Analyzer</h1>
+            <p class="subtitle">Comprehensive Geotechnical Analysis Platform for Dams & Embankments</p>
+            <div class="welcome-message">
+                Welcome from <strong>Manouba School Of Engineering</strong> - Thank you for being here! 🎓
+            </div>
+        </header>
+        
+        <!-- Navigation Menu -->
+        <div class="nav-menu">
+            <button class="nav-btn active" onclick="showSection('home')">
+                <span>🏠</span> Home
+            </button>
+            <button class="nav-btn" onclick="showSection('analysis')">
+                <span>📊</span> Analysis Tools
+            </button>
+            <button class="nav-btn" onclick="showSection('learning')">
+                <span>📚</span> Learning Hub
+            </button>
+            <button class="nav-btn" onclick="showSection('exercises')">
+                <span>💪</span> Practice Exercises
+            </button>
+        </div>
+        
+        <!-- ========== HOME SECTION ========== -->
+        <section class="main-section active" id="home-section">
+            <div class="geotech-info">
+                <h2><span>🌍</span> What is Geotechnical Engineering?</h2>
+                <p>
+                    Geotechnical engineering is the branch of civil engineering concerned with the engineering behavior 
+                    of earth materials. It uses principles of soil mechanics and rock mechanics to investigate subsurface 
+                    conditions and materials, determine their physical/mechanical properties, evaluate stability of natural 
+                    slopes and man-made soil deposits, assess risks posed by site conditions, design earthworks and structure 
+                    foundations, and monitor site conditions and foundation construction.
+                </p>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3><span>🏗️</span> Soil Mechanics</h3>
+                        <p>Study of soil behavior including strength, deformation, and flow of water through soils.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3><span>⚖️</span> Foundation Engineering</h3>
+                        <p>Design of foundations for structures to safely transfer loads to the underlying soil or rock.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3><span>🌊</span> Earthworks & Dams</h3>
+                        <p>Design and construction of earth structures including embankments, dams, and retaining walls.</p>
+                    </div>
+                    <div class="info-card">
+                        <h3><span>📊</span> Site Investigation</h3>
+                        <p>Collection of information about subsurface conditions at a site proposed for construction.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Access to Analysis Tools -->
+            <div class="card">
+                <h2><span>⚡</span> Quick Analysis Tools</h2>
+                <div class="output-grid">
+                    <div class="output-item" onclick="showSection('analysis'); switchTab(0);" style="cursor: pointer;">
+                        <div class="output-value">🏷️</div>
+                        <div class="output-label">Soil Classification</div>
+                    </div>
+                    <div class="output-item" onclick="showSection('analysis'); switchTab(3);" style="cursor: pointer;">
+                        <div class="output-value">📐</div>
+                        <div class="output-label">Stress Analysis</div>
+                    </div>
+                    <div class="output-item" onclick="showSection('analysis'); switchTab(4);" style="cursor: pointer;">
+                        <div class="output-value">⚫</div>
+                        <div class="output-label">Mohr Circle</div>
+                    </div>
+                    <div class="output-item" onclick="showSection('analysis'); switchTab(5);" style="cursor: pointer;">
+                        <div class="output-value">🏗️</div>
+                        <div class="output-label">Dam Stability</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Section -->
+            <div class="team-section">
+                <h2 style="color: #47114e; margin-bottom: 15px; text-align: center;">👥 Project Team</h2>
+                <div class="team-grid">
+                    <div class="team-member">Mariem Gasmi</div>
+                    <div class="team-member">Yakine Mekni</div>
+                    <div class="team-member">Meriam Taieb</div>
+                    <div class="team-member">Aya Belhadi</div>
+                    <div class="team-member">Mariem Hamzaoui</div>
+                    <div class="team-member">Nour Ben Ismail</div>
+                    <div class="team-member">Sarra Bouzidi</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ========== ANALYSIS TOOLS SECTION ========== -->
+        <section class="main-section" id="analysis-section">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(0)">Soil Classification</div>
+                <div class="tab" onclick="switchTab(1)">Soil Properties</div>
+                <div class="tab" onclick="switchTab(2)">Seepage Analysis</div>
+                <div class="tab" onclick="switchTab(3)">Stress Analysis</div>
+                <div class="tab" onclick="switchTab(4)">Mohr Circle</div>
+                <div class="tab" onclick="switchTab(5)">Dam Stability</div>
+            </div>
+            
+            <!-- TAB 1: Soil Classification -->
+            <div class="tab-content active" id="tab1">
+                <div class="dashboard">
+                    <div class="card">
+                        <h2><span>🔬</span> USCS Classification Input</h2>
+                        <div class="input-group">
+                            <label>Gravel Content (%)</label>
+                            <input type="number" id="gravel" min="0" max="100" value="25">
+                        </div>
+                        <div class="input-group">
+                            <label>Sand Content (%)</label>
+                            <input type="number" id="sand" min="0" max="100" value="40">
+                        </div>
+                        <div class="input-group">
+                            <label>Fines Content (%)</label>
+                            <input type="number" id="fines" min="0" max="100" value="35">
+                        </div>
+                        <div class="input-group">
+                            <label>Liquid Limit (LL)</label>
+                            <input type="number" id="ll" min="0" value="45">
+                        </div>
+                        <div class="input-group">
+                            <label>Plastic Limit (PL)</label>
+                            <input type="number" id="pl" min="0" value="22">
+                        </div>
+                        <button onclick="classifySoil()">Classify Soil</button>
+                        
+                        <div class="result" id="classificationResult">
+                            Enter data and click "Classify Soil"
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><span>📈</span> Gradation Curve</h2>
+                        <div class="chart-container">
+                            <canvas id="gradationChart"></canvas>
+                        </div>
+                        
+                        <h2 style="margin-top: 30px;"><span>🎨</span> Plasticity Chart</h2>
+                        <div class="chart-container">
+                            <canvas id="plasticityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB 2: Soil Properties -->
+            <div class="tab-content" id="tab2">
+                <div class="dashboard">
+                    <div class="card">
+                        <h2><span>⚖️</span> Phase Relationships</h2>
+                        <div class="input-group">
+                            <label>Total Mass (g)</label>
+                            <input type="number" id="totalMass" value="200">
+                        </div>
+                        <div class="input-group">
+                            <label>Total Volume (cm³)</label>
+                            <input type="number" id="totalVolume" value="100">
+                        </div>
+                        <div class="input-group">
+                            <label>Water Content (%)</label>
+                            <input type="number" id="waterContent" value="25">
+                        </div>
+                        <div class="input-group">
+                            <label>Specific Gravity (Gs)</label>
+                            <input type="number" id="gs" step="0.01" value="2.65">
+                        </div>
+                        <button onclick="calculateProperties()">Calculate Properties</button>
+                        
+                        <div class="output-grid">
+                            <div class="output-item">
+                                <div class="output-value" id="voidRatio">-</div>
+                                <div class="output-label">Void Ratio (e)</div>
+                            </div>
+                            <div class="output-item">
+                                <div class="output-value" id="porosity">-</div>
+                                <div class="output-label">Porosity (n)</div>
+                            </div>
+                            <div class="output-item">
+                                <div class="output-value" id="degreeSaturation">-</div>
+                                <div class="output-label">Saturation (%)</div>
+                            </div>
+                            <div class="output-item">
+                                <div class="output-value" id="dryDensity">-</div>
+                                <div class="output-label">Dry Density (g/cm³)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><span>💧</span> Atterberg Limits Analysis</h2>
+                        <div class="input-group">
+                            <label>Liquid Limit (LL)</label>
+                            <input type="number" id="ll2" value="45">
+                        </div>
+                        <div class="input-group">
+                            <label>Plastic Limit (PL)</label>
+                            <input type="number" id="pl2" value="22">
+                        </div>
+                        <div class="input-group">
+                            <label>Natural Water Content (%)</label>
+                            <input type="number" id="naturalWC" value="30">
+                        </div>
+                        <button onclick="calculateAtterberg()">Calculate Indices</button>
+                        
+                        <div class="result" id="atterbergResult">
+                            <div><strong>Plasticity Index (PI):</strong> <span id="piValue">-</span></div>
+                            <div><strong>Liquidity Index (LI):</strong> <span id="liValue">-</span></div>
+                            <div><strong>Consistency Index (CI):</strong> <span id="ciValue">-</span></div>
+                            <div><strong>Soil State:</strong> <span id="soilState">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB 3: Seepage Analysis -->
+            <div class="tab-content" id="tab3">
+                <div class="dashboard">
+                    <div class="card">
+                        <h2><span>💧</span> Darcy's Law Calculator</h2>
+                        <div class="input-group">
+                            <label>Hydraulic Conductivity, k (m/s)</label>
+                            <input type="number" id="conductivity" step="1e-6" value="1e-4">
+                        </div>
+                        <div class="input-group">
+                            <label>Hydraulic Gradient, i (Δh/L)</label>
+                            <input type="number" id="gradient" step="0.01" value="0.5">
+                        </div>
+                        <div class="input-group">
+                            <label>Cross-sectional Area, A (m²)</label>
+                            <input type="number" id="area" step="0.01" value="2">
+                        </div>
+                        <button onclick="calculateSeepage()">Calculate Flow Rate</button>
+                        
+                        <div class="result">
+                            <div><strong>Flow Rate (Q):</strong> <span id="flowRate">-</span> m³/s</div>
+                            <div><strong>Darcy Velocity (v):</strong> <span id="darcyVelocity">-</span> m/s</div>
+                        </div>
+                        
+                        <h2 style="margin-top: 30px;">Critical Hydraulic Gradient</h2>
+                        <div class="input-group">
+                            <label>Soil Specific Gravity (Gs)</label>
+                            <input type="number" id="gsCritical" step="0.01" value="2.65">
+                        </div>
+                        <div class="input-group">
+                            <label>Void Ratio (e)</label>
+                            <input type="number" id="voidRatioCritical" step="0.01" value="0.65">
+                        </div>
+                        <button onclick="calculateCriticalGradient()">Calculate</button>
+                        
+                        <div class="result">
+                            <div><strong>Critical Gradient (i_cr):</strong> <span id="criticalGradient">-</span></div>
+                            <div><strong>Safety Factor:</strong> <span id="safetyFactor">-</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><span>🌊</span> Flow Net Diagram</h2>
+                        <div class="flownet-container">
+                            <svg class="flownet-diagram" viewBox="0 0 400 300">
+                                <!-- Sheet pile -->
+                                <rect x="180" y="50" width="10" height="200" fill="#5a4a9a"/>
+                                
+                                <!-- Flow lines -->
+                                <path d="M50,100 Q180,100 180,150 Q180,200 350,200" stroke="#9c89ff" stroke-width="2" fill="none"/>
+                                <path d="M50,120 Q180,120 180,150 Q180,180 350,180" stroke="#9c89ff" stroke-width="2" fill="none"/>
+                                <path d="M50,140 Q180,140 180,150 Q180,160 350,160" stroke="#9c89ff" stroke-width="2" fill="none"/>
+                                
+                                <!-- Equipotential lines -->
+                                <path d="M100,50 Q100,150 100,250" stroke="#ff6b9d" stroke-width="1.5" fill="none" stroke-dasharray="5,5"/>
+                                <path d="M150,50 Q150,150 150,250" stroke="#ff6b9d" stroke-width="1.5" fill="none" stroke-dasharray="5,5"/>
+                                <path d="M250,50 Q250,150 250,250" stroke="#ff6b9d" stroke-width="1.5" fill="none" stroke-dasharray="5,5"/>
+                                <path d="M300,50 Q300,150 300,250" stroke="#ff6b9d" stroke-width="1.5" fill="none" stroke-dasharray="5,5"/>
+                                
+                                <!-- Water levels -->
+                                <rect x="0" y="50" width="180" height="20" fill="#4fc3f7" opacity="0.5"/>
+                                <rect x="190" y="230" width="210" height="20" fill="#4fc3f7" opacity="0.5"/>
+                                
+                                <!-- Labels -->
+                                <text x="90" y="40" fill="#5a4a9a" font-size="12">Upstream</text>
+                                <text x="290" y="40" fill="#5a4a9a" font-size="12">Downstream</text>
+                                <text x="185" y="30" fill="#ff6b6b" font-size="12">Sheet Pile</text>
+                                <text x="200" y="280" fill="#9c89ff" font-size="12">Flow Lines</text>
+                                <text x="200" y="295" fill="#ff6b9d" font-size="12">Equipotential Lines</text>
+                            </svg>
+                            <p style="margin-top: 15px; color: #666;">
+                                <strong>Flow Net Parameters:</strong><br>
+                                Number of Flow Channels (Nf) = 3<br>
+                                Number of Potential Drops (Nd) = 6<br>
+                                Shape Factor = 0.5
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB 4: Stress Analysis -->
+            <div class="tab-content" id="tab4">
+                <div class="dashboard">
+                    <div class="card">
+                        <h2><span>📏</span> Boussinesq Stress Distribution</h2>
+                        <div class="input-group">
+                            <label>Point Load, Q (kN)</label>
+                            <input type="number" id="pointLoad" value="200">
+                        </div>
+                        <div class="input-group">
+                            <label>Depth, z (m)</label>
+                            <input type="number" id="depth" value="5">
+                        </div>
+                        <div class="input-group">
+                            <label>Radial Distance, r (m)</label>
+                            <input type="number" id="radialDistance" value="2">
+                        </div>
+                        <button onclick="calculateBoussinesq()">Calculate Stress</button>
+                        
+                        <div class="result">
+                            <div><strong>Vertical Stress Increase (Δσz):</strong> <span id="stressIncrease">-</span> kPa</div>
+                            <div><strong>Influence Factor (I):</strong> <span id="influenceFactor">-</span></div>
+                        </div>
+                        
+                        <h2 style="margin-top: 30px;">Embankment Loading</h2>
+                        <div class="input-group">
+                            <label>Embankment Height, H (m)</label>
+                            <input type="number" id="embankHeight" value="7">
+                        </div>
+                        <div class="input-group">
+                            <label>Soil Unit Weight, γ (kN/m³)</label>
+                            <input type="number" id="soilWeight" value="18">
+                        </div>
+                        <div class="input-group">
+                            <label>Depth Below Embankment, z (m)</label>
+                            <input type="number" id="embankDepth" value="5">
+                        </div>
+                        <button onclick="calculateEmbankmentStress()">Calculate Embankment Stress</button>
+                        
+                        <div class="result">
+                            <div><strong>Embankment Load (q):</strong> <span id="embankLoad">-</span> kPa</div>
+                            <div><strong>Stress at Depth (Δσz):</strong> <span id="embankStress">-</span> kPa</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><span>📊</span> Stress Distribution Chart</h2>
+                        <div class="chart-container">
+                            <canvas id="stressChart"></canvas>
+                        </div>
+                        
+                        <h2 style="margin-top: 30px;">Effective Stress Principle</h2>
+                        <div class="input-group">
+                            <label>Total Vertical Stress, σ (kPa)</label>
+                            <input type="number" id="totalStress" value="150">
+                        </div>
+                        <div class="input-group">
+                            <label>Pore Water Pressure, u (kPa)</label>
+                            <input type="number" id="porePressure" value="50">
+                        </div>
+                        <button onclick="calculateEffectiveStress()">Calculate</button>
+                        
+                        <div class="result">
+                            <div><strong>Effective Stress (σ'):</strong> <span id="effectiveStress">-</span> kPa</div>
+                            <div style="font-size: 0.9rem; margin-top: 10px; color: #666;">
+                                Terzaghi Principle: σ = σ' + u
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB 5: Mohr Circle -->
+            <div class="tab-content" id="tab5">
+                <div class="dashboard">
+                    <div class="card">
+                        <h2><span>⚫</span> Mohr Circle Parameters</h2>
+                        <div class="input-group">
+                            <label>Major Principal Stress, σ₁ (kPa)</label>
+                            <input type="number" id="sigma1" value="300">
+                        </div>
+                        <div class="input-group">
+                            <label>Minor Principal Stress, σ₃ (kPa)</label>
+                            <input type="number" id="sigma3" value="100">
+                        </div>
+                        <div class="input-group">
+                            <label>Pore Water Pressure, u (kPa)</label>
+                            <input type="number" id="mohrPorePressure" value="50">
+                        </div>
+                        <div class="input-group">
+                            <label>Cohesion, c (kPa)</label>
+                            <input type="number" id="cohesion" value="10">
+                        </div>
+                        <div class="input-group">
+                            <label>Friction Angle, φ (°)</label>
+                            <input type="number" id="frictionAngle" value="30">
+                        </div>
+                        <button onclick="drawMohrCircle()">Draw Mohr Circle</button>
+                        
+                        <div class="result">
+                            <div><strong>Center:</strong> (<span id="mohrCenter">-</span>) kPa</div>
+                            <div><strong>Radius:</strong> <span id="mohrRadius">-</span> kPa</div>
+                            <div><strong>Maximum Shear Stress:</strong> <span id="maxShear">-</span> kPa</div>
+                            <div><strong>Failure Status:</strong> <span id="failureStatus" style="color: #ff6b6b;">-</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><span>📐</span> Mohr Circle Diagram</h2>
+                        <div class="mohr-container">
+                            <canvas id="mohrChart"></canvas>
+                        </div>
+                        
+                        <h2 style="margin-top: 30px;">Stress on Inclined Plane</h2>
+                        <div class="input-group">
+                            <label>Inclination Angle, θ (°)</label>
+                            <input type="number" id="inclinationAngle" value="45" min="0" max="90">
+                        </div>
+                        <button onclick="calculateInclinedStress()">Calculate</button>
+                        
+                        <div class="result">
+                            <div><strong>Normal Stress (σₙ):</strong> <span id="normalStress">-</span> kPa</div>
+                            <div><strong>Shear Stress (τ):</strong> <span id="shearStress">-</span> kPa</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB 6: Dam Stability -->
+            <div class="tab-content" id="tab6">
+                <div class="dashboard">
+                    <div class="card">
+                        <h2><span>🏗️</span> Dam Geometry & Materials</h2>
+                        <div class="input-group
+                                                <div class="input-group">
+                            <label>Dam Height, H (m)</label>
+                            <input type="number" id="damHeight" value="15">
+                        </div>
+                        <div class="input-group">
+                            <label>Dam Base Width, B (m)</label>
+                            <input type="number" id="damBaseWidth" value="10">
+                        </div>
+                        <div class="input-group">
+                            <label>Upstream Slope (H:V)</label>
+                            <input type="number" id="upstreamSlope" value="3" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Downstream Slope (H:V)</label>
+                            <input type="number" id="downstreamSlope" value="2" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Dam Material Unit Weight, γ (kN/m³)</label>
+                            <input type="number" id="damMaterialWeight" value="22">
+                        </div>
+                        <button onclick="analyzeDamStability()">Analyze Stability</button>
+                        
+                        <div class="result">
+                            <div><strong>Dam Weight:</strong> <span id="damWeight">-</span> kN/m</div>
+                            <div><strong>Overturning Safety Factor:</strong> <span id="overturningSF">-</span></div>
+                            <div><strong>Sliding Safety Factor:</strong> <span id="slidingSF">-</span></div>
+                            <div><strong>Overall Stability:</strong> <span id="overallStability" style="font-weight: bold;">-</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h2><span>💧</span> Water & Seepage Parameters</h2>
+                        <div class="input-group">
+                            <label>Water Depth, h (m)</label>
+                            <input type="number" id="waterDepth" value="12">
+                        </div>
+                        <div class="input-group">
+                            <label>Uplift Pressure Factor</label>
+                            <input type="number" id="upliftFactor" value="0.5" min="0" max="1" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Foundation Friction Angle, φ (°)</label>
+                            <input type="number" id="foundationFriction" value="25">
+                        </div>
+                        <div class="input-group">
+                            <label>Foundation Cohesion, c (kPa)</label>
+                            <input type="number" id="foundationCohesion" value="15">
+                        </div>
+                        <button onclick="calculateSeepageForces()">Calculate Forces</button>
+                        
+                        <div class="result">
+                            <div><strong>Hydrostatic Force:</strong> <span id="hydrostaticForce">-</span> kN/m</div>
+                            <div><strong>Uplift Force:</strong> <span id="upliftForce">-</span> kN/m</div>
+                            <div><strong>Seepage Exit Gradient:</strong> <span id="exitGradient">-</span></div>
+                            <div><strong>Piping Safety Factor:</strong> <span id="pipingSF">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ========== LEARNING HUB SECTION ========== -->
+        <section class="main-section" id="learning-section">
+            <div class="geotech-info">
+                <h2><span>📚</span> Geotechnical Engineering Learning Hub</h2>
+                <p>
+                    Welcome to the learning hub! Here you'll find comprehensive resources to understand 
+                    fundamental concepts in geotechnical engineering and dam design.
+                </p>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3><span>📖</span> Fundamentals</h3>
+                        <p><strong>Soil Mechanics Basics:</strong> Phase relationships, index properties, classification systems</p>
+                        <p><strong>Stress Distribution:</strong> Boussinesq theory, effective stress principle</p>
+                        <p><strong>Shear Strength:</strong> Mohr-Coulomb failure criterion, laboratory testing</p>
+                        <button onclick="showSection('analysis'); switchTab(1);" style="margin-top: 10px;">Explore</button>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3><span>💧</span> Seepage Analysis</h3>
+                        <p><strong>Darcy's Law:</strong> Flow through porous media</p>
+                        <p><strong>Flow Nets:</strong> Graphical solution for seepage problems</p>
+                        <p><strong>Piping & Erosion:</strong> Failure mechanisms in dams</p>
+                        <button onclick="showSection('analysis'); switchTab(2);" style="margin-top: 10px;">Explore</button>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3><span>⚖️</span> Stability Analysis</h3>
+                        <p><strong>Slope Stability:</strong> Factor of safety, failure surfaces</p>
+                        <p><strong>Dam Stability:</strong> Overturning, sliding, bearing capacity</p>
+                        <p><strong>Earthquake Analysis:</strong> Liquefaction, dynamic stability</p>
+                        <button onclick="showSection('analysis'); switchTab(5);" style="margin-top: 10px;">Explore</button>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3><span>🏗️</span> Design Principles</h3>
+                        <p><strong>Foundation Design:</strong> Shallow and deep foundations</p>
+                        <p><strong>Embankment Design:</strong> Material selection, compaction control</p>
+                        <p><strong>Instrumentation:</strong> Monitoring and safety systems</p>
+                        <button onclick="showSection('analysis'); switchTab(5);" style="margin-top: 10px;">Explore</button>
+                    </div>
+                </div>
+                
+                <h2 style="margin-top: 40px;"><span>🎓</span> Key Concepts</h2>
+                <div class="info-grid" style="grid-template-columns: 1fr;">
+                    <div class="info-card">
+                        <h3><span>🔍</span> The Mohr-Coulomb Failure Criterion</h3>
+                        <p>The Mohr-Coulomb failure criterion is the most widely used model for soil shear strength:</p>
+                        <p><strong>Equation:</strong> τ = c + σ·tan(φ)</p>
+                        <p>Where:<br>
+                        τ = shear strength<br>
+                        c = cohesion<br>
+                        σ = normal stress<br>
+                        φ = friction angle</p>
+                        <p>This criterion states that failure occurs when the shear stress on a plane reaches a value that depends linearly on the normal stress on that plane.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ========== PRACTICE EXERCISES SECTION ========== -->
+        <section class="main-section" id="exercises-section">
+            <div class="geotech-info">
+                <h2><span>💪</span> Practice Exercises</h2>
+                <p>Test your knowledge with these practical geotechnical engineering problems.</p>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3><span>🔢</span> Exercise 1: Soil Classification</h3>
+                        <p><strong>Problem:</strong> A soil sample has 30% gravel, 45% sand, and 25% fines. The liquid limit is 38 and plastic limit is 21. Classify this soil according to USCS.</p>
+                        <div class="input-group" style="margin: 15px 0;">
+                            <label>Your Classification:</label>
+                            <select id="ex1Answer">
+                                <option value="">Select classification</option>
+                                <option value="SM">SM - Silty Sand</option>
+                                <option value="SC">SC - Clayey Sand</option>
+                                <option value="GC">GC - Clayey Gravel</option>
+                                <option value="GM">GM - Silty Gravel</option>
+                            </select>
+                        </div>
+                        <button onclick="checkExercise(1)">Check Answer</button>
+                        <div id="ex1Result" class="result" style="margin-top: 10px; display: none;"></div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3><span>📏</span> Exercise 2: Effective Stress</h3>
+                        <p><strong>Problem:</strong> At a depth of 8m, the total vertical stress is 150 kPa and pore water pressure is 40 kPa. Calculate the effective stress.</p>
+                        <div class="input-group" style="margin: 15px 0;">
+                            <label>Your Answer (kPa):</label>
+                            <input type="number" id="ex2Answer" placeholder="Enter effective stress">
+                        </div>
+                        <button onclick="checkExercise(2)">Check Answer</button>
+                        <div id="ex2Result" class="result" style="margin-top: 10px; display: none;"></div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3><span>⚫</span> Exercise 3: Mohr Circle</h3>
+                        <p><strong>Problem:</strong> Given σ₁ = 400 kPa and σ₃ = 200 kPa, calculate the maximum shear stress.</p>
+                        <div class="input-group" style="margin: 15px 0;">
+                            <label>Your Answer (kPa):</label>
+                            <input type="number" id="ex3Answer" placeholder="Enter shear stress">
+                        </div>
+                        <button onclick="checkExercise(3)">Check Answer</button>
+                        <div id="ex3Result" class="result" style="margin-top: 10px; display: none;"></div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3><span>🏗️</span> Exercise 4: Dam Stability</h3>
+                        <p><strong>Problem:</strong> A dam weighing 500 kN/m has a base width of 8m. The water pressure is 200 kN/m. Calculate the factor of safety against overturning.</p>
+                        <div class="input-group" style="margin: 15px 0;">
+                            <label>Your Answer:</label>
+                            <input type="number" id="ex4Answer" placeholder="Enter safety factor" step="0.1">
+                        </div>
+                        <button onclick="checkExercise(4)">Check Answer</button>
+                        <div id="ex4Result" class="result" style="margin-top: 10px; display: none;"></div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 30px;">
+                    <h2><span>📊</span> Interactive Quiz</h2>
+                    <div id="quizContainer">
+                        <p><strong>Question 1:</strong> Which soil classification system is most commonly used in geotechnical engineering?</p>
+                        <div style="margin: 15px 0;">
+                            <label><input type="radio" name="quiz1" value="a"> AASHTO</label><br>
+                            <label><input type="radio" name="quiz1" value="b"> USCS</label><br>
+                            <label><input type="radio" name="quiz1" value="c"> British Soil Classification</label><br>
+                            <label><input type="radio" name="quiz1" value="d"> MIT Classification</label>
+                        </div>
+                        <button onclick="submitQuiz()">Submit Quiz</button>
+                        <div id="quizResult" class="result" style="margin-top: 15px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>🌱 <strong>GeoTech Analyzer</strong> - A Comprehensive Geotechnical Analysis Platform</p>
+            <p>Manouba School Of Engineering - Ecological Engineering Department</p>
+            <p>Academic Year 2025/2026 - Geotechnical Engineering Project</p>
+            <p>© All rights reserved | Developed with ❤️ by our geotechnical team</p>
+        </footer>
+    </div>
+
+    <script>
+        // Navigation between sections
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.main-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId + '-section').classList.add('active');
+            
+            // Activate corresponding nav button
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.textContent.includes(sectionId.charAt(0).toUpperCase() + sectionId.slice(1))) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Tab switching for analysis tools
+        let currentTab = 0;
+        
+        function switchTab(tabIndex) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById('tab' + (tabIndex + 1)).classList.add('active');
+            
+            // Activate selected tab
+            document.querySelectorAll('.tab')[tabIndex].classList.add('active');
+            
+            currentTab = tabIndex;
+            
+            // Initialize charts if needed
+            if (tabIndex === 0) {
+                initializeGradationChart();
+                initializePlasticityChart();
+            } else if (tabIndex === 4) {
+                drawMohrCircle();
+            }
+        }
+        
+        // ========== SOIL CLASSIFICATION ==========
+        function classifySoil() {
+            const gravel = parseFloat(document.getElementById('gravel').value);
+            const sand = parseFloat(document.getElementById('sand').value);
+            const fines = parseFloat(document.getElementById('fines').value);
+            const ll = parseFloat(document.getElementById('ll').value);
+            const pl = parseFloat(document.getElementById('pl').value);
+            
+            if (gravel + sand + fines !== 100) {
+                document.getElementById('classificationResult').innerHTML = 
+                    '<span style="color: #ff6b6b;">Error: Sum of percentages must equal 100%</span>';
+                return;
+            }
+            
+            const pi = ll - pl;
+            let classification = "";
+            let description = "";
+            
+            if (fines < 5) {
+                // Coarse-grained soil with little fines
+                if (gravel > sand) {
+                    classification = "GW/GP";
+                    description = "Well-graded/Poorly-graded GRAVEL";
+                } else {
+                    classification = "SW/SP";
+                    description = "Well-graded/Poorly-graded SAND";
+                }
+            } else if (fines > 12) {
+                // Enough fines to influence properties
+                if (gravel > sand) {
+                    if (pi > 7 && ll > 50) {
+                        classification = "GC";
+                        description = "Clayey GRAVEL";
+                    } else if (pi < 4 || ll < 28) {
+                        classification = "GM";
+                        description = "Silty GRAVEL";
+                    } else {
+                        classification = "GM-GC";
+                        description = "Silty-Clayey GRAVEL";
+                    }
+                } else {
+                    if (pi > 7 && ll > 50) {
+                        classification = "SC";
+                        description = "Clayey SAND";
+                    } else if (pi < 4 || ll < 28) {
+                        classification = "SM";
+                        description = "Silty SAND";
+                    } else {
+                        classification = "SM-SC";
+                        description = "Silty-Clayey SAND";
+                    }
+                }
+            } else {
+                // Borderline case
+                classification = "Borderline soil";
+                description = "Requires dual classification";
+            }
+            
+            document.getElementById('classificationResult').innerHTML = `
+                <strong>USCS Classification:</strong> ${classification}<br>
+                <strong>Description:</strong> ${description}<br>
+                <strong>Plasticity Index (PI):</strong> ${pi.toFixed(1)}<br>
+                <strong>Liquid Limit (LL):</strong> ${ll}<br>
+                <strong>A-line:</strong> ${(0.73 * (ll - 20)).toFixed(1)} (PI above A-line: ${pi > (0.73 * (ll - 20)) ? 'Yes' : 'No'})
+            `;
+            
+            updateGradationChart(gravel, sand, fines);
+            updatePlasticityChart(ll, pi);
+        }
+        
+        // ========== SOIL PROPERTIES ==========
+        function calculateProperties() {
+            const M = parseFloat(document.getElementById('totalMass').value);
+            const V = parseFloat(document.getElementById('totalVolume').value);
+            const w = parseFloat(document.getElementById('waterContent').value) / 100;
+            const Gs = parseFloat(document.getElementById('gs').value);
+            
+            const γw = 9.81; // kN/m³, but we're working in g/cm³ for density
+            // Convert to consistent units
+            const ρ = M / V; // g/cm³
+            
+            // Calculate void ratio
+            const ρs = Gs * 1.0; // g/cm³ (density of solids)
+            const e = (ρs * (1 + w) / ρ) - 1;
+            
+            // Calculate other properties
+            const n = e / (1 + e) * 100; // porosity as percentage
+            const S = (w * Gs / e) * 100; // degree of saturation as percentage
+            const ρd = ρ / (1 + w); // dry density
+            
+            document.getElementById('voidRatio').textContent = e.toFixed(3);
+            document.getElementById('porosity').textContent = n.toFixed(1) + '%';
+            document.getElementById('degreeSaturation').textContent = S.toFixed(1) + '%';
+            document.getElementById('dryDensity').textContent = ρd.toFixed(3) + ' g/cm³';
+        }
+        
+        function calculateAtterberg() {
+            const LL = parseFloat(document.getElementById('ll2').value);
+            const PL = parseFloat(document.getElementById('pl2').value);
+            const w = parseFloat(document.getElementById('naturalWC').value);
+            
+            const PI = LL - PL;
+            const LI = (w - PL) / PI;
+            const CI = (LL - w) / PI;
+            
+            let soilState = "";
+            if (LI < 0) soilState = "Solid";
+            else if (LI < 0.5) soilState = "Semi-solid";
+            else if (LI < 1.0) soilState = "Plastic";
+            else soilState = "Liquid";
+            
+            document.getElementById('piValue').textContent = PI.toFixed(1);
+            document.getElementById('liValue').textContent = LI.toFixed(2);
+            document.getElementById('ciValue').textContent = CI.toFixed(2);
+            document.getElementById('soilState').textContent = soilState;
+        }
+        
+        // ========== SEEPAGE ANALYSIS ==========
+        function calculateSeepage() {
+            const k = parseFloat(document.getElementById('conductivity').value);
+            const i = parseFloat(document.getElementById('gradient').value);
+            const A = parseFloat(document.getElementById('area').value);
+            
+            const Q = k * i * A;
+            const v = k * i;
+            
+            document.getElementById('flowRate').textContent = Q.toExponential(3);
+            document.getElementById('darcyVelocity').textContent = v.toExponential(3);
+        }
+        
+        function calculateCriticalGradient() {
+            const Gs = parseFloat(document.getElementById('gsCritical').value);
+            const e = parseFloat(document.getElementById('voidRatioCritical').value);
+            
+            const i_cr = (Gs - 1) / (1 + e);
+            const actualGradient = parseFloat(document.getElementById('gradient').value) || 0.5;
+            const FS = i_cr / actualGradient;
+            
+            document.getElementById('criticalGradient').textContent = i_cr.toFixed(3);
+            document.getElementById('safetyFactor').textContent = FS.toFixed(2) + 
+                (FS >= 1.5 ? " (SAFE ✓)" : " (UNSAFE ✗)");
+        }
+        
+        // ========== STRESS ANALYSIS ==========
+        function calculateBoussinesq() {
+            const Q = parseFloat(document.getElementById('pointLoad').value);
+            const z = parseFloat(document.getElementById('depth').value);
+            const r = parseFloat(document.getElementById('radialDistance').value);
+            
+            const R = Math.sqrt(r * r + z * z);
+            const I = (3 / (2 * Math.PI)) * Math.pow(z / R, 5);
+            const Δσz = I * Q / (z * z);
+            
+            document.getElementById('stressIncrease').textContent = Δσz.toFixed(2);
+            document.getElementById('influenceFactor').textContent = I.toFixed(4);
+            
+            updateStressChart(z, Δσz);
+        }
+        
+        function calculateEmbankmentStress() {
+            const H = parseFloat(document.getElementById('embankHeight').value);
+            const γ = parseFloat(document.getElementById('soilWeight').value);
+            const z = parseFloat(document.getElementById('embankDepth').value);
+            
+            const q = γ * H;
+            // Simplified embankment stress calculation
+            const Δσz = q * (0.5 + Math.atan(H / z) / Math.PI);
+            
+            document.getElementById('embankLoad').textContent = q.toFixed(2);
+            document.getElementById('embankStress').textContent = Δσz.toFixed(2);
+        }
+        
+        function calculateEffectiveStress() {
+            const σ = parseFloat(document.getElementById('totalStress').value);
+            const u = parseFloat(document.getElementById('porePressure').value);
+            
+            const σ_prime = σ - u;
+            
+            document.getElementById('effectiveStress').textContent = σ_prime.toFixed(2);
+        }
+        
+        // ========== MOHR CIRCLE ==========
+        function drawMohrCircle() {
+            const σ1 = parseFloat(document.getElementById('sigma1').value);
+            const σ3 = parseFloat(document.getElementById('sigma3').value);
+            const u = parseFloat(document.getElementById('mohrPorePressure').value);
+            const c = parseFloat(document.getElementById('cohesion').value);
+            const φ = parseFloat(document.getElementById('frictionAngle').value);
+            
+            // Calculate effective stresses
+            const σ1_prime = σ1 - u;
+            const σ3_prime = σ3 - u;
+            
+            const center = (σ1_prime + σ3_prime) / 2;
+            const radius = (σ1_prime - σ3_prime) / 2;
+            const maxShear = radius;
+            
+            // Check failure using Mohr-Coulomb criterion
+            const τ_max = radius;
+            const φ_rad = φ * Math.PI / 180;
+            const τ_failure = c + center * Math.tan(φ_rad);
+            
+            let failureStatus = "";
+            if (τ_max < τ_failure) {
+                failureStatus = "SAFE (Stress state below failure envelope)";
+            } else {
+                failureStatus = "FAILURE (Stress state reaches failure envelope)";
+            }
+            
+            document.getElementById('mohrCenter').textContent = center.toFixed(1);
+            document.getElementById('mohrRadius').textContent = radius.toFixed(1);
+            document.getElementById('maxShear').textContent = maxShear.toFixed(1);
+            document.getElementById('failureStatus').textContent = failureStatus;
+            
+            // Draw Mohr Circle
+            const ctx = document.getElementById('mohrChart').getContext('2d');
+            
+            if (window.mohrChart) {
+                window.mohrChart.destroy();
+            }
+            
+            window.mohrChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Mohr Circle',
+                            data: [
+                                {x: σ3_prime, y: 0},
+                                {x: center, y: radius},
+                                {x: σ1_prime, y: 0}
+                            ],
+                            backgroundColor: 'rgba(92, 107, 192, 0.1)',
+                            borderColor: 'rgba(92, 107, 192, 1)',
+                            borderWidth: 2,
+                            pointRadius: 5,
+                            showLine: true,
+                            fill: true
+                        },
+                        {
+                            label: 'Failure Envelope',
+                            data: [
+                                {x: 0, y: c},
+                                {x: σ1_prime * 1.5, y: c + σ1_prime * 1.5 * Math.tan(φ_rad)}
+                            ],
+                            borderColor: 'rgba(255, 107, 107, 1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            showLine: true,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Normal Stress (kPa)'
+                            },
+                            min: 0,
+                            max: Math.max(σ1_prime * 1.2, 100)
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Shear Stress (kPa)'
+                            },
+                            min: 0,
+                            max: Math.max(τ_failure * 1.2, 100)
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `σ=${context.parsed.x.toFixed(1)} kPa, τ=${context.parsed.y.toFixed(1)} kPa`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function calculateInclinedStress() {
+            const θ = parseFloat(document.getElementById('inclinationAngle').value);
+            const σ1 = parseFloat(document.getElementById('sigma1').value);
+            const σ3 = parseFloat(document.getElementById('sigma3').value);
+            const u = parseFloat(document.getElementById('mohrPorePressure').value);
+            
+            const σ1_prime = σ1 - u;
+            const σ3_prime = σ3 - u;
+            
+            const θ_rad = θ * Math.PI / 180;
+            const center = (σ1_prime + σ3_prime) / 2;
+            const radius = (σ1_prime - σ3_prime) / 2;
+            
+            const σ_n = center + radius * Math.cos(2 * θ_rad);
+            const τ = radius * Math.sin(2 * θ_rad);
+            
+            document.getElementById('normalStress').textContent = σ_n.toFixed(1);
+            document.getElementById('shearStress').textContent = τ.toFixed(1);
+        }
+        
+        // ========== DAM STABILITY ==========
+        function analyzeDamStability() {
+            const H = parseFloat(document.getElementById('damHeight').value);
+            const B = parseFloat(document.getElementById('damBaseWidth').value);
+            const γ = parseFloat(document.getElementById('damMaterialWeight').value);
+            
+            // Simplified dam stability analysis
+            const damWeight = 0.5 * γ * H * B; // Simplified as triangular section
+            const waterDepth = parseFloat(document.getElementById('waterDepth').value) || H * 0.8;
+            const hydrostaticForce = 0.5 * 9.81 * waterDepth * waterDepth;
+            
+            // Overturning safety factor
+            const resistingMoment = damWeight * B * 0.67; // Approximate
+            const overturningMoment = hydrostaticForce * waterDepth / 3;
+            const FSoverturning = resistingMoment / overturningMoment;
+            
+            // Sliding safety factor
+            const foundationFriction = parseFloat(document.getElementById('foundationFriction').value) || 25;
+            const foundationCohesion = parseFloat(document.getElementById('foundationCohesion').value) || 15;
+            const φ_rad = foundationFriction * Math.PI / 180;
+            const slidingResistance = damWeight * Math.tan(φ_rad) + foundationCohesion * B;
+            const FSsliding = slidingResistance / hydrostaticForce;
+            
+            let overallStability = "";
+            if (FSoverturning > 1.5 && FSsliding > 1.5) {
+                overallStability = "STABLE ✓";
+            } else if (FSoverturning > 1.2 && FSsliding > 1.2) {
+                overallStability = "MARGINAL ⚠";
+            } else {
+                overallStability = "UNSTABLE ✗";
+            }
+            
+            document.getElementById('damWeight').textContent = damWeight.toFixed(0);
+            document.getElementById('overturningSF').textContent = FSoverturning.toFixed(2);
+            document.getElementById('slidingSF').textContent = FSsliding.toFixed(2);
+            document.getElementById('overallStability').textContent = overallStability;
+            document.getElementById('overallStability').style.color = 
+                overallStability.includes("STABLE") ? "#4CAF50" : 
+                overallStability.includes("MARGINAL") ? "#FF9800" : "#F44336";
+        }
+        
+        function calculateSeepageForces() {
+            const h = parseFloat(document.getElementById('waterDepth').value);
+            const upliftFactor = parseFloat(document.getElementById('upliftFactor').value);
+            const B = parseFloat(document.getElementById('damBaseWidth').value) || 10;
+            
+            const hydrostaticForce = 0.5 * 9.81 * h * h;
+            const upliftForce = upliftFactor * 9.81 * h * B;
+            
+            // Exit gradient calculation (simplified)
+            const Δh = h;
+            const flowPathLength = B * 2;
+            const exitGradient = Δh / flowPathLength;
+            
+            // Critical gradient (simplified)
+            const Gs = 2.65; // Assume typical value
+            const e = 0.65; // Assume typical value
+            const i_cr = (Gs - 1) / (1 + e);
+            const pipingSF = i_cr / exitGradient;
+            
+            document.getElementById('hydrostaticForce').textContent = hydrostaticForce.toFixed(0);
+            document.getElementById('upliftForce').textContent = upliftForce.toFixed(0);
+            document.getElementById('exitGradient').textContent = exitGradient.toFixed(3);
+            document.getElementById('pipingSF').textContent = pipingSF.toFixed(2) + 
+                (pipingSF >= 2.0 ? " (SAFE ✓)" : " (CHECK REQUIRED ⚠)");
+        }
+        
+        // ========== CHARTS ==========
+        function initializeGradationChart() {
+            const ctx = document.getElementById('gradationChart').getContext('2d');
+            
+            window.gradationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['0.001', '0.01', '0.1', '1', '10', '100'],
+                    datasets: [{
+                        label: 'Gradation Curve',
+                        data: [100, 80, 60, 40, 20, 0],
+                        borderColor: '#5a4a9a',
+                        backgroundColor: 'rgba(90, 74, 154, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Particle Size (mm)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Percent Finer (%)'
+                            },
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateGradationChart(gravel, sand, fines) {
+            // Simplified gradation curve update
+            const gravelSize = [100, 100, 100 - gravel, 0, 0, 0];
+            window.gradationChart.data.datasets[0].data = gravelSize;
+            window.gradationChart.update();
+        }
+        
+        function initializePlasticityChart() {
+            const ctx = document.getElementById('plasticityChart').getContext('2d');
+            
+            window.plasticityChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'A-line',
+                            data: [
+                                {x: 0, y: 0},
+                                {x: 100, y: 58.4}
+                            ],
+                            borderColor: '#ff6b6b',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            showLine: true,
+                            fill: false
+                        },
+                        {
+                            label: 'Soil Point',
+                            data: [{x: 45, y: 23}],
+                            backgroundColor: '#5a4a9a',
+                            borderColor: '#5a4a9a',
+                            borderWidth: 2,
+                            pointRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Liquid Limit (LL)'
+                            },
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Plasticity Index (PI)'
+                            },
+                            min: 0,
+                            max: 60,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        annotation: {
+                            annotations: {
+                                clLine: {
+                                    type: 'line',
+                                    yMin: 7,
+                                    yMax: 7,
+                                    borderColor: '#4CAF50',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                },
+                                mlLine: {
+                                    type: 'line',
+                                    xMin: 50,
+                                    xMax: 50,
+                                    borderColor: '#FF9800',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updatePlasticityChart(ll, pi) {
+            window.plasticityChart.data.datasets[1].data[0] = {x: ll, y: pi};
+            window.plasticityChart.update();
+        }
+        
+        function updateStressChart(depth, stress) {
+            // Stress distribution chart
+            const ctx = document.getElementById('stressChart').getContext('2d');
+            
+            if (window.stressChart) {
+                window.stressChart.destroy();
+            }
+            
+            const depths = [0, depth/2, depth, depth*1.5, depth*2];
+            const stresses = [stress*2, stress*1.5, stress, stress*0.5, stress*0.2];
+            
+            window.stressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: depths.map(d => d.toFixed(1) + 'm'),
+                    datasets: [{
+                        label: 'Stress Distribution',
+                        data: stresses,
+                        borderColor: '#5a4a9a',
+                        backgroundColor: 'rgba(90, 74, 154, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Depth (m)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Vertical Stress (kPa)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ========== PRACTICE EXERCISES ==========
+        function checkExercise(exNumber) {
+            let resultDiv = document.getElementById(`ex${exNumber}Result`);
+            
+            switch(exNumber) {
+                case 1:
+                    const answer1 = document.getElementById('ex1Answer').value;
+                    const correct1 = "SC";
+                    if (answer1 === correct1) {
+                        resultDiv.innerHTML = "✅ Correct! The soil is SC (Clayey Sand)";
+                        resultDiv.style.color = "#4CAF50";
+                    } else {
+                        resultDiv.innerHTML = "❌ Incorrect. The correct answer is SC (Clayey Sand)";
+                        resultDiv.style.color = "#F44336";
+                    }
+                    break;
+                    
+                case 2:
+                    const answer2 = parseFloat(document.getElementById('ex2Answer').value);
+                    const correct2 = 110;
+                    if (Math.abs(answer2 - correct2) < 1) {
+                        resultDiv.innerHTML = `✅ Correct! Effective stress = ${correct2} kPa (σ' = σ - u = 150 - 40 = 110 kPa)`;
+                        resultDiv.style.color = "#4CAF50";
+                    } else {
+                        resultDiv.innerHTML = `❌ Incorrect. The correct answer is ${correct2} kPa (σ' = σ - u = 150 - 40 = 110 kPa)`;
+                        resultDiv.style.color = "#F44336";
+                    }
+                    break;
+                    
+                case 3:
+                    const answer3 = parseFloat(document.getElementById('ex3Answer').value);
+                    const correct3 = 100;
+                    if (Math.abs(answer3 - correct3) < 5) {
+                        resultDiv.innerHTML = `✅ Correct! Maximum shear stress = ${correct3} kPa (τ_max = (σ₁ - σ₃)/2 = (400-200)/2 = 100 kPa)`;
+                        resultDiv.style.color = "#4CAF50";
+                    } else {
+                        resultDiv.innerHTML = `❌ Incorrect. The correct answer is ${correct3} kPa (τ_max = (σ₁ - σ₃)/2 = (400-200)/2 = 100 kPa)`;
+                        resultDiv.style.color = "#F44336";
+                    }
+                    break;
+                    
+                case 4:
+                    const answer4 = parseFloat(document.getElementById('ex4Answer').value);
+                    const correct4 = 1.67;
+                    if (Math.abs(answer4 - correct4) < 0.1) {
+                        resultDiv.innerHTML = `✅ Correct! Safety factor = ${correct4} (FS = Resisting moment / Overturning moment = (500×4) / (200×2.67) = 1.67)`;
+                        resultDiv.style.color = "#4CAF50";
+                    } else {
+                        resultDiv.innerHTML = `❌ Incorrect. The correct answer is ${correct4} (FS = Resisting moment / Overturning moment = (500×4) / (200×2.67) = 1.67)`;
+                        resultDiv.style.color = "#F44336";
+                    }
+                    break;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+        
+        function submitQuiz() {
+            const selected = document.querySelector('input[name="quiz1"]:checked');
+            const resultDiv = document.getElementById('quizResult');
+            
+            if (!selected) {
+                resultDiv.innerHTML = "⚠ Please select an answer!";
+                resultDiv.style.color = "#FF9800";
+                resultDiv.style.display = 'block';
+                return;
+            }
+            
+            if (selected.value === 'b') {
+                resultDiv.innerHTML = "✅ Correct! The USCS (Unified Soil Classification System) is the most commonly used system in geotechnical engineering.";
+                resultDiv.style.color = "#4CAF50";
+            } else {
+                resultDiv.innerHTML = "❌ Incorrect. The correct answer is USCS (Unified Soil Classification System).";
+                resultDiv.style.color = "#F44336";
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize charts
+            initializeGradationChart();
+            initializePlasticityChart();
+            drawMohrCircle();
+            
+            // Set default values
+            classifySoil();
+            calculateProperties();
+            calculateAtterberg();
+            calculateSeepage();
+            calculateCriticalGradient();
+            calculateBoussinesq();
+            calculateEmbankmentStress();
+            calculateEffectiveStress();
+            analyzeDamStability();
+            calculateSeepageForces();
+        });
+    </script>
+</body>
+</html>
